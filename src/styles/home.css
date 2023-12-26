@@ -1,0 +1,15 @@
+.home{
+    padding: 15px 0px;
+    margin: 2px 2px;
+    background: #5e5e5e;
+    border-radius: 5px;
+}
+h1{
+    color: #ffffff;
+}
+.library__wrapper{
+    margin: 1rem 2rem;
+}
+.library__items{
+    column-gap: 2rem;
+}
