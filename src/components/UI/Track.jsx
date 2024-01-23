@@ -21,6 +21,7 @@ const Track = ({ album, artists, name }) => {
             }
         }
     }
+    
     return (
         <div className='track__info'>
             <div className='track__img'>

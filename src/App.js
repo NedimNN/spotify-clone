@@ -8,10 +8,9 @@ function App() {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [playerState, setPlayerState] = useState({
-    currentSongs: [],
     currentIndex: 0,
     isPlaying: false,
-    activeSong: {},
+    activeSong: null,
   });
 
 

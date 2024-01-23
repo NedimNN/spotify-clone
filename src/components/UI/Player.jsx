@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { DataContext } from '../../App';
-import { get } from '../../providers/helper.ts';
-import { Col, Row } from 'reactstrap';
+import { get, usePrevious } from '../../providers/helper.ts';
 
 import '../../styles/player.css';
 import Track from './Track.jsx';
@@ -13,84 +12,73 @@ const Player = () => {
     const [track, setTrack] = useState(null);
 
     const { token, playerState, setPlayerState } = useContext(DataContext);
+
+    const [seekTime, setSeekTime] = useState(0);
+    const [appTime, setAppTime] = useState(0);
+    const [volume, setVolume] = useState(0);
+
     let album = null;
     let artists = null;
     let duration_ms = 0;
     let name = "";
 
-    let is_playing = false;
     let progress_ms = 0;
     let repeat_state = "";
     let shuffle_state = false;
 
+    const prevPlayerState = usePrevious(playerState);
 
     useEffect(() => {
-        async function getPlayerandQ() {
+        async function getPlayer() {
             if (token !== null && !ignore) {
                 let temp = null;
-                temp = await get("player", token, true);
-                let q = null;
-                q = await get('player/queue', token, true)
+                temp = await get("player/currently-playing", token, true);
+
                 if (temp !== null) {
                     setPlayer(temp);
-                }
-                if (q !== null) {
                     setPlayerState({
-                        currentSongs: q.queue,
-                        currentIndex: -1,
-                        isPlaying: false,
-                        activeSong: q.currently_playing
-                    })
+                        currentIndex: playerState.currentIndex,
+                        isPlaying: temp.is_playing,
+                        activeSong: temp.item
+                    });
                 }
             }
         }
         let ignore = false;
-        getPlayerandQ();
+       
+        if (playerState.activeSong === null ) {
+            setTimeout(() => {
+                getPlayer();
+            }, 300);
+        }
+
         return () => {
             ignore = true;
         }
-    }, [token])
+    }, [token, playerState])
 
-    useEffect(() => {
-        if (playerState.currentSongs.length) {
-            setPlayerState({
-                currentSongs: playerState.currentSongs,
-                currentIndex: playerState.currentIndex,
-                isPlaying: true,
-                activeSong: playerState.activeSong
-            });
-        }
-    }, [playerState.currentIndex])
-
-    if (player !== null && track === null) {
-        setTrack(player.item);
+    if (player !== null ) {
+        ({ progress_ms, repeat_state, shuffle_state } = player);
+        ({ album, artists, duration_ms, name } = player.item);
     }
-
-    if (track !== null) {
-        ({ is_playing, progress_ms, repeat_state, shuffle_state } = player);
-        ({ album, artists, duration_ms, name } = track);
-    }
-
-    function nextSong() {
-        let i = playerState.currentIndex + 1;
-        setPlayerState({
-            currentSongs: playerState.currentSongs,
-            currentIndex: i,
-            isPlaying: true,
-            activeSong: playerState.currentSongs[i]
-        });
-    }
-
-    
 
     return (
         <div className='player__wrapper'>
-            {track !== null ?
+            {player !== null ?
                 <div className='player__items'>
                     <Track album={album} artists={artists} name={name} />
-                    <MediaControl shuffleState={shuffle_state} isPlaying={is_playing} repeatState={repeat_state} progressMs={progress_ms} durationMs={duration_ms} />
-                    {console.log(playerState)}
-
+                    <MediaControl
+                        shuffleState={shuffle_state}
+                        repeatState={repeat_state}
+                        progressMs={progress_ms}
+                        durationMs={duration_ms}
+                        value={appTime}
+                        min='0'
+                        max={duration_ms}
+                        onInput={(e) => setSeekTime(e.target.value)}
+                        setSeekTime={setSeekTime}
+                        appTime={appTime}
+                    />
                 </div>
 
                 : <h2 style={{ color: 'white' }}>Player loading...</h2>}
